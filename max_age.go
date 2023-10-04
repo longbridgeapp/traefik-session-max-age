@@ -33,30 +33,32 @@ func (rww responseWriterWrapper) Header() http.Header {
 
 func (rww responseWriterWrapper) WriteHeader(code int) {
 	cookies := rww.ResponseWriter.Header()["Set-Cookie"]
-	if rww.cookieName != "" && len(cookies) > 0 {
-		for i, line := range cookies {
-			parts := strings.Split(textproto.TrimString(line), ";")
-			if len(parts) == 1 && parts[0] == "" {
-				continue
+	if len(cookies) == 0 {
+		rww.ResponseWriter.WriteHeader(code)
+		return
+	}
+	for i, line := range cookies {
+		parts := strings.Split(textproto.TrimString(line), ";")
+		if len(parts) == 1 && parts[0] == "" {
+			continue
+		}
+		parts[0] = textproto.TrimString(parts[0])
+		name, _, ok := strings.Cut(parts[0], "=")
+		if !ok {
+			continue
+		}
+		buf := make([]byte, 0, 19)
+		name = textproto.TrimString(name)
+		if name == rww.cookieName {
+			var b strings.Builder
+			b.WriteString(line)
+			if rww.maxAge > 0 {
+				b.WriteString("; Max-Age=")
+				b.Write(strconv.AppendInt(buf, int64(rww.maxAge), 10))
+			} else if rww.maxAge < 0 {
+				b.WriteString("; Max-Age=0")
 			}
-			parts[0] = textproto.TrimString(parts[0])
-			name, _, ok := strings.Cut(parts[0], "=")
-			if !ok {
-				continue
-			}
-			buf := make([]byte, 0, 19)
-			name = textproto.TrimString(name)
-			if name == rww.cookieName {
-				var b strings.Builder
-				b.WriteString(line)
-				if rww.maxAge > 0 {
-					b.WriteString("; Max-Age=")
-					b.Write(strconv.AppendInt(buf, int64(rww.maxAge), 10))
-				} else if rww.maxAge < 0 {
-					b.WriteString("; Max-Age=0")
-				}
-				cookies[i] = b.String()
-			}
+			cookies[i] = b.String()
 		}
 	}
 	rww.ResponseWriter.WriteHeader(code)
