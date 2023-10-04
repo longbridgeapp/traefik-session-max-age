@@ -1,12 +1,10 @@
-displayName: Demo Plugin
+displayName: Sticky Session Max Age
 type: middleware
-iconPath: .assets/icon.png
 
-import: github.com/traefik/plugindemo
+import: github.com/longbridgeapp/traefik-session-max-age
 
-summary: '[Demo] Add Request Header'
+summary: "Set sticky session cookie's max age"
 
 testData:
-  Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
+  CookieName: _traefik_session
+  MaxAge: 1000

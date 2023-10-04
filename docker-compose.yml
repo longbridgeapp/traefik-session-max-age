@@ -1,0 +1,32 @@
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v2.10"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--experimental.plugins.session-max-age.modulename=github.com/longbridgeapp/traefik-session-max-age"
+      - "--experimental.plugins.session-max-age.version=v0.1.2"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.whoami.middlewares=session-max-age@docker"
+      - "traefik.http.middlewares.session-max-age.plugin.session-max-age.CookieName=_traefik_session"
+      - "traefik.http.middlewares.session-max-age.plugin.session-max-age.MaxAge=10000"
+      - "traefik.http.services.whoami.loadBalancer.sticky.cookie=true"
+      - "traefik.http.services.whoami.loadBalancer.sticky.cookie.name=_traefik_session"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
