@@ -1,3 +1,5 @@
+// Package traefik_session_max_age is a plugin for the Traefik reverse proxy
+// that sets cookie's max-age
 package traefik_session_max_age
 
 import (
@@ -16,17 +18,17 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-type ResponseWriterWrapper struct {
+type responseWriterWrapper struct {
 	http.ResponseWriter
 	cookieName string
 	maxAge     int
 }
 
-func (rww ResponseWriterWrapper) Header() http.Header {
+func (rww responseWriterWrapper) Header() http.Header {
 	return rww.ResponseWriter.Header()
 }
 
-func (rww ResponseWriterWrapper) WriteHeader(code int) {
+func (rww responseWriterWrapper) WriteHeader(code int) {
 	if rww.cookieName != "" {
 		res := http.Response{Header: rww.ResponseWriter.Header()}
 		cookies := res.Cookies()
@@ -40,16 +42,11 @@ func (rww ResponseWriterWrapper) WriteHeader(code int) {
 	rww.ResponseWriter.WriteHeader(code)
 }
 
-func (rww ResponseWriterWrapper) Write(b []byte) (int, error) {
+func (rww responseWriterWrapper) Write(b []byte) (int, error) {
 	return rww.ResponseWriter.Write(b)
 }
 
-type HeaderWrapper http.Header
-
-func (h HeaderWrapper) Add(key, value string) {
-	h.Add(key, value)
-}
-
+// SessionMaxAge is a middleware for traefik middlware plugin to set cookie max age.
 type SessionMaxAge struct {
 	next       http.Handler
 	cookieName string
@@ -57,6 +54,7 @@ type SessionMaxAge struct {
 	name       string
 }
 
+// New return a wrapped http.Handler.
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	return &SessionMaxAge{
 		next:       next,
@@ -67,5 +65,5 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (a *SessionMaxAge) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	a.next.ServeHTTP(ResponseWriterWrapper{ResponseWriter: rw, cookieName: a.cookieName, maxAge: a.maxAge}, req)
+	a.next.ServeHTTP(responseWriterWrapper{ResponseWriter: rw, cookieName: a.cookieName, maxAge: a.maxAge}, req)
 }

@@ -11,7 +11,7 @@ services:
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
       - "--experimental.plugins.session-max-age.modulename=github.com/longbridgeapp/traefik-session-max-age"
-      - "--experimental.plugins.session-max-age.version=v0.1.2"
+      - "--experimental.plugins.session-max-age.version=v0.1.0"
     ports:
       - "80:80"
       - "8080:8080"
